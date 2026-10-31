@@ -496,10 +496,11 @@ function setupCanvas() {
   const dpr = window.devicePixelRatio || 1;
   const rect = canvas.getBoundingClientRect();
   wheelSize = Math.round(rect.width);
-  canvas.width = wheelSize * dpr;
-  canvas.height = wheelSize * dpr;
+  const deviceSize = Math.max(1, Math.round(wheelSize * dpr));
+  canvas.width = deviceSize;
+  canvas.height = deviceSize;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  baseImage = computeBaseWheel(wheelSize, wheelSize * dpr);
+  baseImage = computeBaseWheel(wheelSize, deviceSize);
   drawWheel();
 }
 
