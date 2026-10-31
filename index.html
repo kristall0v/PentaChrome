@@ -213,6 +213,22 @@
   .swatch-chip:active { transform: translateY(0); }
   .swatch-chip.origin { outline: 2px solid rgba(255,255,255,.55); outline-offset: 1px; }
 
+  /* ---------- Contrast check ---------- */
+  .contrast-card { margin-top: 22px; }
+  .contrast-boxes { display: flex; gap: 14px; }
+  .contrast-box {
+    flex: 1; min-width: 0; height: 120px;
+    border-radius: 14px; border: 1px solid rgba(255,255,255,.14);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--sans); font-size: clamp(20px, 3vw, 28px); font-weight: 700;
+    letter-spacing: 1px; user-select: none;
+  }
+  .contrast-black { background: #0b0d12; }
+  .contrast-white { background: #f5f6f8; }
+  @media (max-width: 640px) {
+    .contrast-boxes { flex-direction: column; }
+  }
+
   @media (max-width: 640px) {
     .scheme-row { grid-template-columns: 1fr; gap: 8px; }
     .scheme-swatches { flex-wrap: wrap; }
@@ -262,6 +278,18 @@
       </div>
 
       <button class="random-btn" id="random">Случайный цвет</button>
+    </div>
+  </div>
+
+  <div class="card contrast-card">
+    <h2>Проверка контраста</h2>
+    <div class="contrast-boxes">
+      <div class="contrast-box contrast-black" id="contrastBlack">
+        <span>PentaChrome</span>
+      </div>
+      <div class="contrast-box contrast-white" id="contrastWhite">
+        <span>PentaChrome</span>
+      </div>
     </div>
   </div>
 
@@ -599,6 +627,10 @@ function updateAll(r, g, b, skipKey) {
   swatch.style.background = `rgb(${r}, ${g}, ${b})`;
   swatch.style.color = lum > 140 ? '#101216' : '#f5f6f8';
   swatchHex.textContent = hex(rgb);
+
+  const contrastStyle = `rgb(${r}, ${g}, ${b})`;
+  document.getElementById('contrastBlack').style.color = contrastStyle;
+  document.getElementById('contrastWhite').style.color = contrastStyle;
 
   renderSchemes();
   saveLastColor();
