@@ -439,8 +439,12 @@ let wheelSize = 0;
 let baseImage = null;
 
 function computeBaseWheel(size) {
+  const off = document.createElement('canvas');
+  off.width = size;
+  off.height = size;
+  const octx = off.getContext('2d');
   const cx = size / 2, cy = size / 2, R = size / 2 - 12;
-  const img = ctx.createImageData(size, size);
+  const img = octx.createImageData(size, size);
   const data = img.data;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
@@ -458,12 +462,14 @@ function computeBaseWheel(size) {
       }
     }
   }
-  return { img, cx, cy, R };
+  octx.putImageData(img, 0, 0);
+  return { canvas: off, cx, cy, R };
 }
 
 function drawWheel() {
   if (!baseImage) return;
-  ctx.putImageData(baseImage.img, 0, 0);
+  ctx.clearRect(0, 0, wheelSize, wheelSize);
+  ctx.drawImage(baseImage.canvas, 0, 0, wheelSize, wheelSize);
 
   const { cx, cy, R } = baseImage;
   ctx.beginPath();
@@ -495,21 +501,22 @@ function setupCanvas() {
   drawWheel();
 }
 
-function setFromHsv(h, s, v) {
+function setFromHsv(h, s, v, skipKey) {
   state.h = ((h % 360) + 360) % 360;
   state.s = Math.max(0, Math.min(1, s));
   state.v = Math.max(0, Math.min(1, v));
   const [r, g, b] = hsvToRgb(state.h, state.s, state.v);
-  updateAll(r, g, b);
+  updateAll(r, g, b, skipKey);
 }
 
-function updateAll(r, g, b) {
+function updateAll(r, g, b, skipKey) {
   const rgb = [r, g, b];
   slider.value = Math.round(state.v * 100);
   sliderOut.textContent = slider.value + '%';
   slider.style.setProperty('--thumb', `#${[r,g,b].map(x => x.toString(16).padStart(2,'0')).join('')}`);
 
   for (const key of Object.keys(inputs)) {
+    if (key === skipKey) continue;
     inputs[key].value = formatters[key](rgb);
     inputs[key].classList.remove('invalid');
   }
@@ -570,6 +577,13 @@ for (const key of Object.keys(inputs)) {
       el.classList.add('invalid');
     }
   };
+  el.addEventListener('input', () => {
+    const rgb = parsers[key](el.value);
+    if (!rgb) return;
+    el.classList.remove('invalid');
+    const [h, s, v] = rgbToHsv(...rgb);
+    setFromHsv(h, s, v, key);
+  });
   el.addEventListener('change', apply);
   el.addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
 }
