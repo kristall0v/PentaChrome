@@ -871,7 +871,14 @@ window.addEventListener('resize', () => setupCanvas());
 
 setupCanvas();
 const saved = loadLastColor();
-setFromHsv(saved ? saved.h : 273, saved ? saved.s : 0.78, saved ? saved.v : 0.84);
+if (saved) {
+  setFromHsv(saved.h, saved.s, saved.v);
+} else {
+  const LOGO_COLORS = ['#fdfb10', '#8b30d5', '#06c1f6', '#fa1d5e', '#0bc68a'];
+  const startRgb = parseHex(LOGO_COLORS[Math.floor(Math.random() * LOGO_COLORS.length)]);
+  const [sh, ss, sv] = rgbToHsv(...startRgb);
+  setFromHsv(sh, ss, sv);
+}
 </script>
 </body>
 </html>
