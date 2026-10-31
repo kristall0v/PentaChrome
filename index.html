@@ -123,11 +123,6 @@
     box-shadow: inset 0 0 0 1px rgba(0,0,0,.12), inset 0 0 60px rgba(0,0,0,.18);
     margin-bottom: 20px;
   }
-  .swatch small {
-    font-size: 13px; font-weight: 400; opacity: .72;
-    margin-right: 10px; letter-spacing: .5px;
-  }
-
   /* ---------- Codes table ---------- */
   .codes { display: flex; flex-direction: column; gap: 10px; }
   .code-row {
@@ -254,7 +249,7 @@
 
     <div class="card">
       <h2>Выбранный цвет</h2>
-      <div class="swatch" id="swatch"><small>HEX</small><span id="swatchHex">#000000</span></div>
+      <div class="swatch" id="swatch"><span id="swatchHex">#000000</span></div>
 
       <h2 style="margin-top:22px;">Кодировки</h2>
       <div class="codes">
@@ -620,9 +615,7 @@ const schemesConfig = [
   { id: 'triad',         label: 'Триада',          angles: [0, 120, 240],
     info: 'Три цвета, равномерно распределённые по кругу через 120°.' },
   { id: 'tetrad',        label: 'Тетрада',         angles: [0, 90, 180, 270],
-    info: 'Четыре цвета через 90° — две пары комплементарных, богатая палитра.' },
-  { id: 'opposite',      label: 'Противоположный', angles: [180],
-    info: 'Цвет на 180° от исходного — полная противоположность на круге.' }
+    info: 'Четыре цвета через 90° — две пары комплементарных, богатая палитра.' }
 ];
 const schemesEl = document.getElementById('schemes');
 let schemeTooltip = null;
