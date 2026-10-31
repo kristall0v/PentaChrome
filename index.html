@@ -173,6 +173,34 @@
   .random-btn:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
   .random-btn:active { transform: translateY(0); }
 
+  /* ---------- Color schemes ---------- */
+  .schemes-card { margin-top: 22px; }
+  .scheme-row {
+    display: grid; grid-template-columns: 190px 1fr;
+    gap: 16px; align-items: center;
+    padding: 10px 0;
+  }
+  .scheme-row + .scheme-row { border-top: 1px solid rgba(255,255,255,.06); }
+  .scheme-label { font-size: 13.5px; color: var(--text-dim); font-weight: 500; }
+  .scheme-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .swatch-chip {
+    position: relative; width: 72px; height: 46px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.14); cursor: pointer;
+    display: flex; align-items: flex-end; justify-content: center;
+    padding-bottom: 5px; transition: transform .12s, box-shadow .12s;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+  }
+  .swatch-chip:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,.4);
+  }
+  .swatch-chip:active { transform: translateY(0); }
+  .swatch-chip.origin { outline: 2px solid rgba(255,255,255,.55); outline-offset: 1px; }
+
+  @media (max-width: 640px) {
+    .scheme-row { grid-template-columns: 1fr; gap: 8px; }
+  }
+
   footer { text-align: center; margin-top: 40px; color: var(--text-dim); font-size: 13px; }
   footer a { color: var(--text-dim); }
 </style>
@@ -218,6 +246,11 @@
 
       <button class="random-btn" id="random">Случайный цвет</button>
     </div>
+  </div>
+
+  <div class="card schemes-card">
+    <h2>Цветовые схемы</h2>
+    <div id="schemes"></div>
   </div>
 
   <footer>PentaChrome · сделано с ♥ для работы с цветом</footer>
@@ -549,7 +582,74 @@ function updateAll(r, g, b, skipKey) {
   swatch.style.color = lum > 140 ? '#101216' : '#f5f6f8';
   swatchHex.textContent = hex(rgb);
 
+  renderSchemes();
+  saveLastColor();
   drawWheel();
+}
+
+/* ================= Цветовые схемы ================= */
+
+const schemesConfig = [
+  { id: 'analog',        label: 'Аналогичные',       angles: [-30, 0, 30] },
+  { id: 'complementary', label: 'Комплиментарные',   angles: [0, 180] },
+  { id: 'triad',         label: 'Триада',            angles: [0, 120, 240] },
+  { id: 'tetrad',        label: 'Тетрада',           angles: [0, 90, 180, 270] },
+  { id: 'opposite',      label: 'Противоположный',   angles: [180] }
+];
+const schemesEl = document.getElementById('schemes');
+
+function renderSchemes() {
+  schemesEl.innerHTML = '';
+  for (const scheme of schemesConfig) {
+    const row = document.createElement('div');
+    row.className = 'scheme-row';
+
+    const label = document.createElement('span');
+    label.className = 'scheme-label';
+    label.textContent = scheme.label;
+    row.appendChild(label);
+
+    const swatches = document.createElement('div');
+    swatches.className = 'scheme-swatches';
+
+    scheme.angles.forEach((offset, i) => {
+      const h = ((state.h + offset) % 360 + 360) % 360;
+      const [rr, gg, bb] = hsvToRgb(h, state.s, state.v);
+      const chip = document.createElement('button');
+      chip.className = 'swatch-chip' + (offset === 0 ? ' origin' : '');
+      chip.style.background = `rgb(${rr}, ${gg}, ${bb})`;
+      chip.style.color = (0.299 * rr + 0.587 * gg + 0.114 * bb) > 140 ? '#101216' : '#f5f6f8';
+      chip.title = hex([rr, gg, bb]) + ' · клик — выбрать';
+      chip.textContent = hex([rr, gg, bb]);
+      chip.addEventListener('click', () => setFromHsv(h, state.s, state.v));
+      swatches.appendChild(chip);
+    });
+
+    row.appendChild(swatches);
+    schemesEl.appendChild(row);
+  }
+}
+
+/* ================= Сохранение в браузере ================= */
+
+const STORE_KEY = 'pentachrome.lastColor';
+
+function saveLastColor() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ h: state.h, s: state.s, v: state.v }));
+  } catch (e) { /* приватный режим и т.п. */ }
+}
+
+function loadLastColor() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (typeof data.h === 'number' && typeof data.s === 'number' && typeof data.v === 'number') {
+      return { h: data.h, s: Math.max(0, Math.min(1, data.s)), v: Math.max(0, Math.min(1, data.v)) };
+    }
+  } catch (e) { /* повреждённые данные */ }
+  return null;
 }
 
 /* ================= Взаимодействие ================= */
@@ -633,8 +733,8 @@ document.getElementById('random').addEventListener('click', () => {
 window.addEventListener('resize', () => setupCanvas());
 
 setupCanvas();
-setFromHsv(0, 0, 0); /* старт: чёрный */
-setFromHsv(210, 0.78, 0.85); /* старт: приятный синий */
+const saved = loadLastColor();
+setFromHsv(saved ? saved.h : 210, saved ? saved.s : 0.78, saved ? saved.v : 0.85);
 </script>
 </body>
 </html>
