@@ -50,8 +50,9 @@
   .grid {
     display: grid; gap: 22px;
     grid-template-columns: minmax(340px, 480px) 1fr;
-    align-items: start;
+    align-items: stretch;
   }
+  .wheel-card { display: flex; flex-direction: column; }
   @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
 
   .card {
@@ -214,20 +215,19 @@
   .swatch-chip.origin { outline: 2px solid rgba(255,255,255,.55); outline-offset: 1px; }
 
   /* ---------- Contrast check ---------- */
-  .contrast-card { margin-top: 22px; }
-  .contrast-boxes { display: flex; gap: 14px; }
+  .contrast-boxes {
+    display: flex; gap: 12px;
+    margin-top: auto; padding-top: 20px;
+  }
   .contrast-box {
-    flex: 1; min-width: 0; height: 120px;
-    border-radius: 14px; border: 1px solid rgba(255,255,255,.14);
+    flex: 1; min-width: 0; height: 56px;
+    border-radius: 12px; border: 1px solid rgba(255,255,255,.14);
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--sans); font-size: clamp(20px, 3vw, 28px); font-weight: 700;
-    letter-spacing: 1px; user-select: none;
+    font-family: var(--sans); font-size: 14px; font-weight: 700;
+    letter-spacing: .6px; user-select: none; white-space: nowrap;
   }
   .contrast-black { background: #0b0d12; }
   .contrast-white { background: #f5f6f8; }
-  @media (max-width: 640px) {
-    .contrast-boxes { flex-direction: column; }
-  }
 
   @media (max-width: 640px) {
     .scheme-row { grid-template-columns: 1fr; gap: 8px; }
@@ -249,7 +249,7 @@
     </header>
 
   <div class="grid">
-    <div class="card">
+    <div class="card wheel-card">
       <h2>Колесо цветов</h2>
       <div class="wheel-area">
         <canvas id="wheel"></canvas>
@@ -260,6 +260,14 @@
           </div>
           <input type="range" id="value" min="0" max="100" value="100">
         </div>
+        </div>
+        <div class="contrast-boxes">
+          <div class="contrast-box contrast-black" id="contrastBlack">
+            <span>PentaChrome</span>
+          </div>
+          <div class="contrast-box contrast-white" id="contrastWhite">
+            <span>PentaChrome</span>
+          </div>
         </div>
     </div>
 
@@ -278,18 +286,6 @@
       </div>
 
       <button class="random-btn" id="random">Случайный цвет</button>
-    </div>
-  </div>
-
-  <div class="card contrast-card">
-    <h2>Проверка контраста</h2>
-    <div class="contrast-boxes">
-      <div class="contrast-box contrast-black" id="contrastBlack">
-        <span>PentaChrome</span>
-      </div>
-      <div class="contrast-box contrast-white" id="contrastWhite">
-        <span>PentaChrome</span>
-      </div>
     </div>
   </div>
 
