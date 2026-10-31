@@ -708,20 +708,20 @@ function pentagonItems() {
 }
 
 const schemesConfig = [
-  { id: 'analog',        label: 'Аналогичные',             items: analogItems,
-    info: 'Соседние цвета на цветовом круге (±30°). Гармоничная, спокойная комбинация.' },
   { id: 'complementary', label: 'Комплиментарные',         items: complementaryItems,
     info: 'Пара цветов напротив друг друга на круге (180°). Максимальный контраст.' },
+  { id: 'analog',        label: 'Аналогичные',             items: analogItems,
+    info: 'Соседние цвета на цветовом круге (±30°). Гармоничная, спокойная комбинация.' },
+  { id: 'split',         label: 'Расщеплённая',              items: splitItems,
+    info: 'Противоположный цвет (180°) и два его соседа (±30°). Контраст мягче, чем у комплементарной.' },
   { id: 'triad',         label: 'Триада',                  items: triadItems,
     info: 'Три цвета, равномерно распределённые по кругу через 120°.' },
   { id: 'tetrad',        label: 'Тетрада',                 items: tetradItems,
     info: 'Четыре цвета через 90° — две пары комплементарных, богатая палитра.' },
-  { id: 'split',         label: 'Расщеплённая',              items: splitItems,
-    info: 'Противоположный цвет (180°) и два его соседа (±30°). Контраст мягче, чем у комплементарной.' },
-  { id: 'mono',          label: 'Монохроматическая',       items: monoItems,
-    info: 'Один оттенок в разных тонах: от насыщенного до почти бесцветного.' },
   { id: 'pentagon',      label: 'Пятиугольник',            items: pentagonItems,
-    info: 'Пять цветов, равномерно распределённых по кругу через 72°.' }
+    info: 'Пять цветов, равномерно распределённых по кругу через 72°.' },
+  { id: 'mono',          label: 'Монохроматическая',       items: monoItems,
+    info: 'Один оттенок в разных тонах: от насыщенного до почти бесцветного.' }
 ];
 const schemesEl = document.getElementById('schemes');
 let schemeTooltip = null;
