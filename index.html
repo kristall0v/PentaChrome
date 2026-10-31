@@ -111,7 +111,7 @@
     background: var(--thumb, #fff); border: 3px solid #fff;
     box-shadow: 0 2px 10px rgba(0,0,0,.6);
   }
-  .wheel-hint { margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
+  
 
   /* ---------- Color display ---------- */
   .swatch {
@@ -185,8 +185,7 @@
       <div class="logo-mark"></div>
       <h1>PentaChrome</h1>
     </div>
-    <div class="subtitle">Колесо цветов и кодировки — HEX · RGB · HSL · HSV · CMYK · HWB</div>
-  </header>
+    </header>
 
   <div class="grid">
     <div class="card">
@@ -200,8 +199,7 @@
           </div>
           <input type="range" id="value" min="0" max="100" value="100">
         </div>
-        <div class="wheel-hint">Клик или перетаскивание по колесу выбирает оттенок и насыщенность · слайдер регулирует яркость</div>
-      </div>
+        </div>
     </div>
 
     <div class="card">
@@ -218,7 +216,7 @@
         <div class="code-row"><span class="fmt">HWB</span><input id="hwb"  spellcheck="false" autocomplete="off"><button class="copy-btn" data-copy="hwb" title="Копировать">⧉</button></div>
       </div>
 
-      <button class="random-btn" id="random">🎲 Случайный цвет</button>
+      <button class="random-btn" id="random">Случайный цвет</button>
     </div>
   </div>
 
@@ -438,23 +436,25 @@ const formatters = { hex, rgb: rgbF, hsl: hslF, hsv: hsvF, cmyk: cmykF, hwb: hwb
 let wheelSize = 0;
 let baseImage = null;
 
-function computeBaseWheel(size) {
+function computeBaseWheel(cssSize, deviceSize) {
+  const dpr = deviceSize / cssSize;
   const off = document.createElement('canvas');
-  off.width = size;
-  off.height = size;
+  off.width = deviceSize;
+  off.height = deviceSize;
   const octx = off.getContext('2d');
-  const cx = size / 2, cy = size / 2, R = size / 2 - 12;
-  const img = octx.createImageData(size, size);
+  const devCx = deviceSize / 2, devCy = deviceSize / 2;
+  const devR = (cssSize / 2 - 12) * dpr;
+  const img = octx.createImageData(deviceSize, deviceSize);
   const data = img.data;
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const dx = x - cx + 0.5, dy = y - cy + 0.5;
+  for (let y = 0; y < deviceSize; y++) {
+    for (let x = 0; x < deviceSize; x++) {
+      const dx = x - devCx + 0.5, dy = y - devCy + 0.5;
       const r = Math.hypot(dx, dy);
-      const idx = (y * size + x) * 4;
-      if (r <= R) {
+      const idx = (y * deviceSize + x) * 4;
+      if (r <= devR) {
         const deg = Math.atan2(dy, dx) * 180 / Math.PI;
         const hue = (360 - deg + 360) % 360;
-        const sat = r / R;
+        const sat = r / devR;
         const [rr, gg, bb] = hsvToRgb(hue, sat, 1);
         data[idx] = rr; data[idx + 1] = gg; data[idx + 2] = bb; data[idx + 3] = 255;
       } else {
@@ -463,12 +463,14 @@ function computeBaseWheel(size) {
     }
   }
   octx.putImageData(img, 0, 0);
-  return { canvas: off, cx, cy, R };
+  return { canvas: off, cx: cssSize / 2, cy: cssSize / 2, R: cssSize / 2 - 12 };
 }
 
 function drawWheel() {
   if (!baseImage) return;
   ctx.clearRect(0, 0, wheelSize, wheelSize);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(baseImage.canvas, 0, 0, wheelSize, wheelSize);
 
   const { cx, cy, R } = baseImage;
@@ -497,7 +499,7 @@ function setupCanvas() {
   canvas.width = wheelSize * dpr;
   canvas.height = wheelSize * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  baseImage = computeBaseWheel(wheelSize);
+  baseImage = computeBaseWheel(wheelSize, wheelSize * dpr);
   drawWheel();
 }
 
