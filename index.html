@@ -919,16 +919,6 @@ if (saved) {
   setFromHsv(sh, ss, sv);
 }
 
-setTimeout(() => {
-  const info = [];
-  for (const row of document.querySelectorAll('.scheme-row')) {
-    const label = row.querySelector('.scheme-label');
-    const chips = row.querySelectorAll('.swatch-chip');
-    const scrollW = label.scrollWidth, clientW = label.clientWidth;
-    info.push(label.textContent + '|chips=' + chips.length + '|overflow=' + (scrollW > clientW + 1));
-  }
-  document.title = 'SCHEMES: ' + info.join(' || ');
-}, 800);
 </script>
 </body>
 </html>
