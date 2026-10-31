@@ -185,7 +185,23 @@
     padding: 10px 0;
   }
   .scheme-row + .scheme-row { border-top: 1px solid rgba(255,255,255,.06); }
-  .scheme-label { font-size: 13.5px; color: var(--text-dim); font-weight: 500; }
+  .scheme-label-row { display: flex; align-items: center; gap: 8px; }
+  .scheme-label { font-size: 17px; color: var(--text); font-weight: 600; }
+  .scheme-info {
+    width: 24px; height: 24px; border-radius: 50%; flex: 0 0 auto;
+    border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06);
+    color: var(--text-dim); font-size: 13px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .scheme-info:hover { color: var(--text); border-color: rgba(255,255,255,.45); background: rgba(255,255,255,.12); }
+  .scheme-tooltip {
+    position: fixed; z-index: 30; max-width: 300px;
+    background: #1c2130; border: 1px solid rgba(255,255,255,.16);
+    border-radius: 10px; padding: 10px 12px;
+    font-size: 13.5px; line-height: 1.5; color: var(--text);
+    box-shadow: 0 12px 34px rgba(0,0,0,.55);
+  }
   .scheme-swatches { display: flex; gap: 10px; }
   .swatch-chip {
     position: relative; flex: 1; min-width: 0;
@@ -597,13 +613,43 @@ function updateAll(r, g, b, skipKey) {
 /* ================= Цветовые схемы ================= */
 
 const schemesConfig = [
-  { id: 'analog',        label: 'Аналогичные',       angles: [-30, 0, 30] },
-  { id: 'complementary', label: 'Комплиментарные',   angles: [0, 180] },
-  { id: 'triad',         label: 'Триада',            angles: [0, 120, 240] },
-  { id: 'tetrad',        label: 'Тетрада',           angles: [0, 90, 180, 270] },
-  { id: 'opposite',      label: 'Противоположный',   angles: [180] }
+  { id: 'analog',        label: 'Аналогичные',     angles: [-30, 0, 30],
+    info: 'Соседние цвета на цветовом круге (±30°). Гармоничная, спокойная комбинация.' },
+  { id: 'complementary', label: 'Комплиментарные', angles: [0, 180],
+    info: 'Пара цветов напротив друг друга на круге (180°). Максимальный контраст.' },
+  { id: 'triad',         label: 'Триада',          angles: [0, 120, 240],
+    info: 'Три цвета, равномерно распределённые по кругу через 120°.' },
+  { id: 'tetrad',        label: 'Тетрада',         angles: [0, 90, 180, 270],
+    info: 'Четыре цвета через 90° — две пары комплементарных, богатая палитра.' },
+  { id: 'opposite',      label: 'Противоположный', angles: [180],
+    info: 'Цвет на 180° от исходного — полная противоположность на круге.' }
 ];
 const schemesEl = document.getElementById('schemes');
+let schemeTooltip = null;
+
+function showSchemeInfo(e, text) {
+  hideSchemeInfo();
+  schemeTooltip = document.createElement('div');
+  schemeTooltip.className = 'scheme-tooltip';
+  schemeTooltip.textContent = text;
+  document.body.appendChild(schemeTooltip);
+
+  const pad = 10;
+  let left = e.clientX + 14;
+  let top = e.clientY + 14;
+  const rect = schemeTooltip.getBoundingClientRect();
+  if (left + rect.width > window.innerWidth - pad) left = e.clientX - rect.width - 14;
+  if (top + rect.height > window.innerHeight - pad) top = e.clientY - rect.height - 14;
+  schemeTooltip.style.left = Math.max(pad, left) + 'px';
+  schemeTooltip.style.top = Math.max(pad, top) + 'px';
+}
+
+function hideSchemeInfo() {
+  if (schemeTooltip) {
+    schemeTooltip.remove();
+    schemeTooltip = null;
+  }
+}
 
 function renderSchemes() {
   schemesEl.innerHTML = '';
@@ -611,10 +657,26 @@ function renderSchemes() {
     const row = document.createElement('div');
     row.className = 'scheme-row';
 
+    const labelRow = document.createElement('div');
+    labelRow.className = 'scheme-label-row';
+
     const label = document.createElement('span');
     label.className = 'scheme-label';
     label.textContent = scheme.label;
-    row.appendChild(label);
+    labelRow.appendChild(label);
+
+    const infoBtn = document.createElement('button');
+    infoBtn.className = 'scheme-info';
+    infoBtn.textContent = '?';
+    infoBtn.type = 'button';
+    infoBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (schemeTooltip) hideSchemeInfo();
+      else showSchemeInfo(e, scheme.info);
+    });
+    labelRow.appendChild(infoBtn);
+
+    row.appendChild(labelRow);
 
     const swatches = document.createElement('div');
     swatches.className = 'scheme-swatches';
@@ -717,6 +779,14 @@ for (const key of Object.keys(inputs)) {
   el.addEventListener('change', apply);
   el.addEventListener('keydown', e => { if (e.key === 'Enter') apply(); });
 }
+
+document.addEventListener('click', e => {
+  if (schemeTooltip && !e.target.closest('.scheme-info')) hideSchemeInfo();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hideSchemeInfo();
+});
+window.addEventListener('resize', hideSchemeInfo);
 
 for (const btn of document.querySelectorAll('.copy-btn')) {
   btn.addEventListener('click', async () => {
