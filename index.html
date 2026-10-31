@@ -178,7 +178,7 @@
     margin: -12px 0 16px;
   }
   .scheme-row {
-    display: grid; grid-template-columns: 190px 1fr;
+    display: grid; grid-template-columns: 250px 1fr;
     gap: 16px; align-items: center;
     padding: 10px 0;
   }
@@ -231,6 +231,10 @@
   @media (max-width: 640px) {
     .scheme-row { grid-template-columns: 1fr; gap: 8px; }
     .scheme-swatches { flex-wrap: wrap; }
+  }
+  @media (max-width: 900px) and (min-width: 641px) {
+    .scheme-row { grid-template-columns: 220px 1fr; }
+    .scheme-label { font-size: 15px; }
   }
 
   .ad-block {
@@ -674,15 +678,50 @@ function updateAll(r, g, b, skipKey) {
 
 /* ================= Цветовые схемы ================= */
 
+function hueSwatch(h, s, v, origin) {
+  return { h, s, v, origin };
+}
+
+function analogItems() {
+  return [-30, 0, 30].map(d => hueSwatch(state.h + d, state.s, state.v, d === 0));
+}
+function complementaryItems() {
+  return [0, 180].map((d, i) => hueSwatch(state.h + d, state.s, state.v, i === 0));
+}
+function triadItems() {
+  return [0, 120, 240].map((d, i) => hueSwatch(state.h + d, state.s, state.v, i === 0));
+}
+function tetradItems() {
+  return [0, 90, 180, 270].map((d, i) => hueSwatch(state.h + d, state.s, state.v, i === 0));
+}
+function splitItems() {
+  return [0, 150, 210].map((d, i) => hueSwatch(state.h + d, state.s, state.v, i === 0));
+}
+function monoItems() {
+  const steps = [
+    { s: 1.0, v: 1.0 }, { s: 0.75, v: 0.85 }, { s: 0.5, v: 0.7 }, { s: 0.25, v: 0.5 }, { s: 0.08, v: 0.3 }
+  ];
+  return steps.map((st, i) => hueSwatch(state.h, Math.max(0, Math.min(1, state.s * st.s)), Math.max(0, Math.min(1, state.v * st.v)), i === 0));
+}
+function pentagonItems() {
+  return [0, 72, 144, 216, 288].map((d, i) => hueSwatch(state.h + d, state.s, state.v, i === 0));
+}
+
 const schemesConfig = [
-  { id: 'analog',        label: 'Аналогичные',     angles: [-30, 0, 30],
+  { id: 'analog',        label: 'Аналогичные',             items: analogItems,
     info: 'Соседние цвета на цветовом круге (±30°). Гармоничная, спокойная комбинация.' },
-  { id: 'complementary', label: 'Комплиментарные', angles: [0, 180],
+  { id: 'complementary', label: 'Комплиментарные',         items: complementaryItems,
     info: 'Пара цветов напротив друг друга на круге (180°). Максимальный контраст.' },
-  { id: 'triad',         label: 'Триада',          angles: [0, 120, 240],
+  { id: 'triad',         label: 'Триада',                  items: triadItems,
     info: 'Три цвета, равномерно распределённые по кругу через 120°.' },
-  { id: 'tetrad',        label: 'Тетрада',         angles: [0, 90, 180, 270],
-    info: 'Четыре цвета через 90° — две пары комплементарных, богатая палитра.' }
+  { id: 'tetrad',        label: 'Тетрада',                 items: tetradItems,
+    info: 'Четыре цвета через 90° — две пары комплементарных, богатая палитра.' },
+  { id: 'split',         label: 'Раздельно-комплиментарная', items: splitItems,
+    info: 'Противоположный цвет (180°) и два его соседа (±30°). Контраст мягче, чем у комплементарной.' },
+  { id: 'mono',          label: 'Монохроматическая',       items: monoItems,
+    info: 'Один оттенок в разных тонах: от насыщенного до почти бесцветного.' },
+  { id: 'pentagon',      label: 'Пятиугольник',            items: pentagonItems,
+    info: 'Пять цветов, равномерно распределённых по кругу через 72°.' }
 ];
 const schemesEl = document.getElementById('schemes');
 let schemeTooltip = null;
@@ -741,16 +780,16 @@ function renderSchemes() {
     const swatches = document.createElement('div');
     swatches.className = 'scheme-swatches';
 
-    scheme.angles.forEach((offset, i) => {
-      const h = ((state.h + offset) % 360 + 360) % 360;
-      const [rr, gg, bb] = hsvToRgb(h, state.s, state.v);
+    scheme.items().forEach(item => {
+      const h = ((item.h % 360) + 360) % 360;
+      const [rr, gg, bb] = hsvToRgb(h, item.s, item.v);
       const chip = document.createElement('button');
-      chip.className = 'swatch-chip' + (offset === 0 ? ' origin' : '');
+      chip.className = 'swatch-chip' + (item.origin ? ' origin' : '');
       chip.style.background = `rgb(${rr}, ${gg}, ${bb})`;
       chip.style.color = (0.299 * rr + 0.587 * gg + 0.114 * bb) > 140 ? '#101216' : '#f5f6f8';
       chip.title = hex([rr, gg, bb]);
       chip.textContent = hex([rr, gg, bb]);
-      chip.addEventListener('click', () => setFromHsv(h, state.s, state.v));
+      chip.addEventListener('click', () => setFromHsv(h, item.s, item.v));
       swatches.appendChild(chip);
     });
 
@@ -879,6 +918,17 @@ if (saved) {
   const [sh, ss, sv] = rgbToHsv(...startRgb);
   setFromHsv(sh, ss, sv);
 }
+
+setTimeout(() => {
+  const info = [];
+  for (const row of document.querySelectorAll('.scheme-row')) {
+    const label = row.querySelector('.scheme-label');
+    const chips = row.querySelectorAll('.swatch-chip');
+    const scrollW = label.scrollWidth, clientW = label.clientWidth;
+    info.push(label.textContent + '|chips=' + chips.length + '|overflow=' + (scrollW > clientW + 1));
+  }
+  document.title = 'SCHEMES: ' + info.join(' || ');
+}, 800);
 </script>
 </body>
 </html>
