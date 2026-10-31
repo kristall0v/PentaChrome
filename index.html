@@ -175,6 +175,10 @@
 
   /* ---------- Color schemes ---------- */
   .schemes-card { margin-top: 22px; }
+  .schemes-hint {
+    font-size: 13px; color: var(--text-dim);
+    margin: -12px 0 16px;
+  }
   .scheme-row {
     display: grid; grid-template-columns: 190px 1fr;
     gap: 16px; align-items: center;
@@ -182,13 +186,14 @@
   }
   .scheme-row + .scheme-row { border-top: 1px solid rgba(255,255,255,.06); }
   .scheme-label { font-size: 13.5px; color: var(--text-dim); font-weight: 500; }
-  .scheme-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+  .scheme-swatches { display: flex; gap: 10px; }
   .swatch-chip {
-    position: relative; width: 72px; height: 46px; border-radius: 10px;
+    position: relative; flex: 1; min-width: 0;
+    height: 72px; border-radius: 12px;
     border: 1px solid rgba(255,255,255,.14); cursor: pointer;
     display: flex; align-items: flex-end; justify-content: center;
-    padding-bottom: 5px; transition: transform .12s, box-shadow .12s;
-    font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+    padding-bottom: 8px; transition: transform .12s, box-shadow .12s;
+    font-family: var(--mono); font-size: 13px; font-weight: 600;
   }
   .swatch-chip:hover {
     transform: translateY(-3px);
@@ -199,6 +204,7 @@
 
   @media (max-width: 640px) {
     .scheme-row { grid-template-columns: 1fr; gap: 8px; }
+    .scheme-swatches { flex-wrap: wrap; }
   }
 
   footer { text-align: center; margin-top: 40px; color: var(--text-dim); font-size: 13px; }
@@ -250,6 +256,7 @@
 
   <div class="card schemes-card">
     <h2>Цветовые схемы</h2>
+    <div class="schemes-hint">Клик по цвету — выбрать его</div>
     <div id="schemes"></div>
   </div>
 
@@ -619,7 +626,7 @@ function renderSchemes() {
       chip.className = 'swatch-chip' + (offset === 0 ? ' origin' : '');
       chip.style.background = `rgb(${rr}, ${gg}, ${bb})`;
       chip.style.color = (0.299 * rr + 0.587 * gg + 0.114 * bb) > 140 ? '#101216' : '#f5f6f8';
-      chip.title = hex([rr, gg, bb]) + ' · клик — выбрать';
+      chip.title = hex([rr, gg, bb]);
       chip.textContent = hex([rr, gg, bb]);
       chip.addEventListener('click', () => setFromHsv(h, state.s, state.v));
       swatches.appendChild(chip);
