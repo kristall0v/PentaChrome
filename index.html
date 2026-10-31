@@ -232,6 +232,32 @@
     .scheme-swatches { flex-wrap: wrap; }
   }
 
+  .ad-block {
+    margin-top: 30px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.1);
+    background:
+      radial-gradient(600px 200px at 0% 0%, rgba(56,189,248,.1) 0%, rgba(56,189,248,0) 60%),
+      radial-gradient(600px 200px at 100% 100%, rgba(217,70,239,.12) 0%, rgba(217,70,239,0) 60%),
+      var(--card);
+    backdrop-filter: blur(14px);
+    padding: 26px 30px;
+    text-align: center;
+    box-shadow: 0 18px 50px rgba(0,0,0,.3);
+  }
+  .ad-text {
+    max-width: 720px; margin: 0 auto;
+    font-size: 15px; line-height: 1.7; color: var(--text);
+  }
+  .ad-text a {
+    color: #7dd3fc; font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(125,211,252,.55);
+    padding-bottom: 1px;
+    transition: color .15s, border-color .15s;
+  }
+  .ad-text a:hover { color: #bae6fd; border-color: #bae6fd; }
+
   footer { text-align: center; margin-top: 40px; color: var(--text-dim); font-size: 13px; }
   footer a { color: var(--text-dim); }
 </style>
@@ -297,6 +323,14 @@
     <h2>Цветовые схемы</h2>
     <div class="schemes-hint">Клик по цвету — выбрать его</div>
     <div id="schemes"></div>
+  </div>
+
+  <div class="ad-block">
+    <div class="ad-text">
+      Сгенерировать палитру по дате, имени или фотографии, а также найти мировые произведения искусства
+      по палитрам можно в Telegram-боте
+      <a href="https://t.me/PentaChrome_bot" target="_blank" rel="noopener">@PentaChrome_bot</a>
+    </div>
   </div>
 
   <footer>PentaChrome · сделано с ♥ для работы с цветом</footer>
