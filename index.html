@@ -52,7 +52,8 @@
     grid-template-columns: minmax(340px, 480px) 1fr;
     align-items: stretch;
   }
-  .wheel-card { display: flex; flex-direction: column; }
+  .left-col { display: flex; flex-direction: column; gap: 22px; }
+  .contrast-card { margin-top: auto; }
   @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
 
   .card {
@@ -215,15 +216,12 @@
   .swatch-chip.origin { outline: 2px solid rgba(255,255,255,.55); outline-offset: 1px; }
 
   /* ---------- Contrast check ---------- */
-  .contrast-boxes {
-    display: flex; gap: 12px;
-    margin-top: auto; padding-top: 20px;
-  }
+  .contrast-boxes { display: flex; gap: 12px; }
   .contrast-box {
-    flex: 1; min-width: 0; height: 56px;
+    flex: 1; min-width: 0; height: 84px;
     border-radius: 12px; border: 1px solid rgba(255,255,255,.14);
     display: flex; align-items: center; justify-content: center;
-    font-family: var(--sans); font-size: 14px; font-weight: 700;
+    font-family: var(--sans); font-size: 16px; font-weight: 700;
     letter-spacing: .6px; user-select: none; white-space: nowrap;
   }
   .contrast-black { background: #0b0d12; }
@@ -249,18 +247,23 @@
     </header>
 
   <div class="grid">
-    <div class="card wheel-card">
-      <h2>Колесо цветов</h2>
-      <div class="wheel-area">
-        <canvas id="wheel"></canvas>
-        <div class="brightness">
-          <div class="row">
-            <label for="value">Яркость</label>
-            <output id="valueOut">100%</output>
+    <div class="left-col">
+      <div class="card wheel-card">
+        <h2>Колесо цветов</h2>
+        <div class="wheel-area">
+          <canvas id="wheel"></canvas>
+          <div class="brightness">
+            <div class="row">
+              <label for="value">Яркость</label>
+              <output id="valueOut">100%</output>
+            </div>
+            <input type="range" id="value" min="0" max="100" value="100">
           </div>
-          <input type="range" id="value" min="0" max="100" value="100">
         </div>
-        </div>
+      </div>
+
+      <div class="card contrast-card">
+        <h2>Проверка контраста</h2>
         <div class="contrast-boxes">
           <div class="contrast-box contrast-black" id="contrastBlack">
             <span>PentaChrome</span>
@@ -269,6 +272,7 @@
             <span>PentaChrome</span>
           </div>
         </div>
+      </div>
     </div>
 
     <div class="card">
