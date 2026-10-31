@@ -46,8 +46,6 @@
     background: linear-gradient(90deg,#fa1d5e,#fdfb10,#0bc68a,#06c1f6,#8b30d5);
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .subtitle { color: var(--text-dim); font-size: 15px; }
-
   .grid {
     display: grid; gap: 22px;
     grid-template-columns: minmax(340px, 480px) 1fr;
@@ -348,6 +346,8 @@
 
 function hsvToRgb(h, s, v) {
   h = ((h % 360) + 360) % 360;
+  s = Math.max(0, Math.min(1, s));
+  v = Math.max(0, Math.min(1, v));
   const c = v * s;
   const x = c * (1 - Math.abs((h / 60) % 2 - 1));
   const m = v - c;
@@ -426,7 +426,10 @@ function rgbToCmyk(r, g, b) {
 }
 
 function cmykToRgb(c, m, y, k) {
-  c /= 100; m /= 100; y /= 100; k /= 100;
+  c = Math.max(0, Math.min(1, c / 100));
+  m = Math.max(0, Math.min(1, m / 100));
+  y = Math.max(0, Math.min(1, y / 100));
+  k = Math.max(0, Math.min(1, k / 100));
   return [
     Math.round(255 * (1 - c) * (1 - k)),
     Math.round(255 * (1 - m) * (1 - k)),
@@ -441,8 +444,10 @@ function rgbToHwb(r, g, b) {
 
 function hwbToRgb(h, w, b) {
   w /= 100; b /= 100;
-  const s = w / (1 - b);
-  return hsvToRgb(h, Math.max(0, Math.min(1, 1 - s)), 1 - b);
+  const v = Math.max(0, Math.min(1, 1 - b));
+  if (v === 0) return [0, 0, 0];
+  const s = Math.max(0, Math.min(1, 1 - w / v));
+  return hsvToRgb(h, s, v);
 }
 
 /* ================= Парсинг ввода ================= */
@@ -525,6 +530,11 @@ function hwbF(rgb) {
 /* ================= Состояние и UI ================= */
 
 const state = { h: 0, s: 0, v: 1 };
+const TEXT_LUM_THRESHOLD = 140;
+
+function luminance(r, g, b) {
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
 
 const canvas = document.getElementById('wheel');
 const ctx = canvas.getContext('2d');
@@ -561,7 +571,7 @@ function computeBaseWheel(cssSize, deviceSize) {
   off.height = deviceSize;
   const octx = off.getContext('2d');
   const devCx = deviceSize / 2, devCy = deviceSize / 2;
-  const devR = (cssSize / 2 - 12) * dpr;
+  const devR = (cssSize / 2 - WHEEL_PADDING) * dpr;
   const img = octx.createImageData(deviceSize, deviceSize);
   const data = img.data;
   for (let y = 0; y < deviceSize; y++) {
@@ -583,11 +593,15 @@ function computeBaseWheel(cssSize, deviceSize) {
     }
   }
   octx.putImageData(img, 0, 0);
-  return { base: img, canvas: off, cx: cssSize / 2, cy: cssSize / 2, R: cssSize / 2 - 12 };
+  return { base: img, canvas: off, cx: cssSize / 2, cy: cssSize / 2, R: cssSize / 2 - WHEEL_PADDING };
 }
+
+const WHEEL_PADDING = 12;
+const MARKER_RADIUS = 9;
 
 let valueCanvas = null;
 let valueCtx = null;
+let valueCacheV = -1;
 
 function drawWheel() {
   if (!baseImage) return;
@@ -596,18 +610,22 @@ function drawWheel() {
     valueCanvas.width = baseImage.canvas.width;
     valueCanvas.height = baseImage.canvas.height;
     valueCtx = valueCanvas.getContext('2d');
+    valueCacheV = -1;
   }
-  const { base } = baseImage;
-  const out = valueCtx.createImageData(base.width, base.height);
-  const src = base.data, dst = out.data;
-  const v = state.v;
-  for (let i = 0; i < src.length; i += 4) {
-    dst[i] = Math.round(src[i] * v);
-    dst[i + 1] = Math.round(src[i + 1] * v);
-    dst[i + 2] = Math.round(src[i + 2] * v);
-    dst[i + 3] = src[i + 3];
+  if (valueCacheV !== state.v) {
+    const { base } = baseImage;
+    const out = valueCtx.createImageData(base.width, base.height);
+    const src = base.data, dst = out.data;
+    const v = state.v;
+    for (let i = 0; i < src.length; i += 4) {
+      dst[i] = Math.round(src[i] * v);
+      dst[i + 1] = Math.round(src[i + 1] * v);
+      dst[i + 2] = Math.round(src[i + 2] * v);
+      dst[i + 3] = src[i + 3];
+    }
+    valueCtx.putImageData(out, 0, 0);
+    valueCacheV = state.v;
   }
-  valueCtx.putImageData(out, 0, 0);
 
   ctx.clearRect(0, 0, wheelSize, wheelSize);
   ctx.imageSmoothingEnabled = true;
@@ -620,7 +638,7 @@ function drawWheel() {
   const my = cy + Math.sin(rad) * state.s * R;
 
   ctx.beginPath();
-  ctx.arc(mx, my, 9, 0, Math.PI * 2);
+  ctx.arc(mx, my, MARKER_RADIUS, 0, Math.PI * 2);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
   ctx.lineWidth = 3;
@@ -662,9 +680,9 @@ function updateAll(r, g, b, skipKey) {
     inputs[key].classList.remove('invalid');
   }
 
-  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+  const lum = luminance(r, g, b);
   swatch.style.background = `rgb(${r}, ${g}, ${b})`;
-  swatch.style.color = lum > 140 ? '#101216' : '#f5f6f8';
+  swatch.style.color = lum > TEXT_LUM_THRESHOLD ? '#101216' : '#f5f6f8';
   swatchHex.textContent = hex(rgb);
 
   const contrastStyle = `rgb(${r}, ${g}, ${b})`;
@@ -674,6 +692,11 @@ function updateAll(r, g, b, skipKey) {
   renderSchemes();
   saveLastColor();
   drawWheel();
+}
+
+function renderSchemesOnce() {
+  buildSchemes();
+  renderSchemes();
 }
 
 /* ================= Цветовые схемы ================= */
@@ -750,8 +773,11 @@ function hideSchemeInfo() {
   }
 }
 
-function renderSchemes() {
+const schemeChips = [];
+
+function buildSchemes() {
   schemesEl.innerHTML = '';
+  schemeChips.length = 0;
   for (const scheme of schemesConfig) {
     const row = document.createElement('div');
     row.className = 'scheme-row';
@@ -780,32 +806,55 @@ function renderSchemes() {
     const swatches = document.createElement('div');
     swatches.className = 'scheme-swatches';
 
-    scheme.items().forEach(item => {
-      const h = ((item.h % 360) + 360) % 360;
-      const [rr, gg, bb] = hsvToRgb(h, item.s, item.v);
+    const chips = [];
+    scheme.items().forEach((item, i) => {
       const chip = document.createElement('button');
-      chip.className = 'swatch-chip' + (item.origin ? ' origin' : '');
-      chip.style.background = `rgb(${rr}, ${gg}, ${bb})`;
-      chip.style.color = (0.299 * rr + 0.587 * gg + 0.114 * bb) > 140 ? '#101216' : '#f5f6f8';
-      chip.title = hex([rr, gg, bb]);
-      chip.textContent = hex([rr, gg, bb]);
-      chip.addEventListener('click', () => setFromHsv(h, item.s, item.v));
+      chip.className = 'swatch-chip';
+      chip.addEventListener('click', () => {
+        const fresh = scheme.items()[i];
+        const h = ((fresh.h % 360) + 360) % 360;
+        setFromHsv(h, fresh.s, fresh.v);
+      });
       swatches.appendChild(chip);
+      chips.push(chip);
     });
 
     row.appendChild(swatches);
     schemesEl.appendChild(row);
+    schemeChips.push({ chips, scheme });
   }
+}
+
+function renderSchemes() {
+  schemeChips.forEach(({ chips, scheme }) => {
+    const items = scheme.items();
+    for (let i = 0; i < chips.length; i++) {
+      const item = items[i];
+      const chip = chips[i];
+      const h = ((item.h % 360) + 360) % 360;
+      const [rr, gg, bb] = hsvToRgb(h, item.s, item.v);
+      const lum = luminance(rr, gg, bb);
+      chip.style.background = `rgb(${rr}, ${gg}, ${bb})`;
+      chip.style.color = lum > TEXT_LUM_THRESHOLD ? '#101216' : '#f5f6f8';
+      chip.classList.toggle('origin', !!item.origin);
+      chip.textContent = hex([rr, gg, bb]);
+      chip.title = hex([rr, gg, bb]);
+    }
+  });
 }
 
 /* ================= Сохранение в браузере ================= */
 
 const STORE_KEY = 'pentachrome.lastColor';
+let saveTimer = null;
 
 function saveLastColor() {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ h: state.h, s: state.s, v: state.v }));
-  } catch (e) { /* приватный режим и т.п. */ }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({ h: state.h, s: state.s, v: state.v }));
+    } catch (e) { /* приватный режим и т.п. */ }
+  }, 150);
 }
 
 function loadLastColor() {
@@ -824,7 +873,7 @@ function loadLastColor() {
 
 function wheelPosFromEvent(e) {
   const rect = canvas.getBoundingClientRect();
-  const cx = rect.width / 2, cy = rect.height / 2, R = rect.width / 2 - 12;
+  const cx = rect.width / 2, cy = rect.height / 2, R = rect.width / 2 - WHEEL_PADDING;
   const dx = e.clientX - rect.left - cx;
   const dy = e.clientY - rect.top - cy;
   const dist = Math.hypot(dx, dy);
@@ -880,7 +929,7 @@ for (const key of Object.keys(inputs)) {
 }
 
 document.addEventListener('click', e => {
-  if (schemeTooltip && !e.target.closest('.scheme-info')) hideSchemeInfo();
+  if (schemeTooltip && (!(e.target instanceof Element) || !e.target.closest('.scheme-info'))) hideSchemeInfo();
 });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') hideSchemeInfo();
@@ -909,6 +958,7 @@ document.getElementById('random').addEventListener('click', () => {
 window.addEventListener('resize', () => setupCanvas());
 
 setupCanvas();
+renderSchemesOnce();
 const saved = loadLastColor();
 if (saved) {
   setFromHsv(saved.h, saved.s, saved.v);
